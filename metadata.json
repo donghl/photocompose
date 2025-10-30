@@ -1,0 +1,5 @@
+{
+  "name": "AI Virtual Try-On",
+  "description": "An e-commerce tool that uses AI to visualize products on a model. Upload a product image and a model image to generate a virtual try-on composite.",
+  "requestFramePermissions": []
+}
