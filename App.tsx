@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ImageUploader } from './components/ImageUploader';
 import { Spinner } from './components/Spinner';
 import { generateStyledImage } from './services/geminiService';
@@ -14,12 +13,39 @@ interface ImageData {
 const MAX_FILE_SIZE_MB = 2;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
+const loadingMessages = [
+  "Warming up the AI stylist...",
+  "Sketching the initial design...",
+  "Applying digital fabric...",
+  "Adjusting lighting and shadows...",
+  "Rendering photorealistic details...",
+  "This can take a moment, great art needs patience!",
+];
+
 const App: React.FC = () => {
   const [productImage, setProductImage] = useState<ImageData | null>(null);
   const [modelImage, setModelImage] = useState<ImageData | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState(loadingMessages[0]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      let messageIndex = 0;
+      setLoadingMessage(loadingMessages[0]); // Reset to first message on new load
+      interval = setInterval(() => {
+        messageIndex = (messageIndex + 1) % loadingMessages.length;
+        setLoadingMessage(loadingMessages[messageIndex]);
+      }, 3000); // Change message every 3 seconds
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isLoading]);
 
   const handleImageChange = useCallback(async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -58,9 +84,9 @@ const App: React.FC = () => {
       setGeneratedImage(`data:image/png;base64,${resultBase64}`);
     } catch (err) {
       let errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-      // Check for common non-JSON error signatures from serverless platforms
-      if (errorMessage.includes('Unexpected token') || errorMessage.includes('504') || errorMessage.includes('timeout')) {
-        errorMessage += " The server may be busy or the request timed out. This can happen with large images or high demand. Please try again in a moment.";
+      // Provide a more specific and helpful message for serverless timeouts.
+      if (errorMessage.toLowerCase().includes('timeout') || errorMessage.toLowerCase().includes('took too long')) {
+        errorMessage = "The AI is taking longer than expected and the request timed out. This is common on free hosting plans due to processing limits. Please try again in a moment.";
       }
       setError(`Image generation failed: ${errorMessage}`);
       console.error(err);
@@ -105,7 +131,7 @@ const App: React.FC = () => {
             <div className="flex flex-col space-y-2">
               <label className="text-lg font-semibold text-gray-700 dark:text-gray-300">3. Generated Result</label>
               <div className="relative w-full aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center overflow-hidden shadow-inner">
-                {isLoading && <Spinner />}
+                {isLoading && <Spinner message={loadingMessage} />}
                 {!isLoading && generatedImage && (
                   <img src={generatedImage} alt="Generated result" className="object-contain w-full h-full" />
                 )}

@@ -51,7 +51,7 @@ export default async function handler(request: Request) {
       inlineData: { data: modelImage.base64, mimeType: modelImage.mimeType },
     };
     const textPart = {
-      text: "You are an expert fashion photo editor. Your task is to take a product image (first image) and a model image (second image) and create a new, photorealistic image where the model is wearing the product. The final image should be seamless, maintaining the lighting, shadows, pose, and overall style of the original model image. The product should fit naturally on the model as if it were part of the original photoshoot. Do not add any text, logos, or extra elements. Output only the final edited image.",
+      text: "Photorealistically place the garment from the first image onto the model in the second image. Match the model's pose, lighting, and shadows. Output only the final composed image.",
     };
 
     const response = await ai.models.generateContent({
@@ -72,7 +72,7 @@ export default async function handler(request: Request) {
       }
     }
     
-    throw new Error("No image data found in the API response.");
+    throw new Error("The AI model did not return an image. This can happen with complex requests or if the input images are not clear. Please try again with different images.");
 
   } catch (error) {
     console.error("Gemini API call failed in serverless function:", error);
