@@ -42,7 +42,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ id, label, onImage
             </svg>
             <p className="mt-2 font-semibold">Click to upload</p>
             <p className="text-sm">or drag and drop</p>
-            <p className="text-xs mt-1">PNG, JPG, WEBP</p>
+            <p className="text-xs mt-1">PNG, JPG, WEBP (Max 2MB)</p>
           </div>
         )}
       </div>

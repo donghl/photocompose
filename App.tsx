@@ -11,6 +11,9 @@ interface ImageData {
   name: string;
 }
 
+const MAX_FILE_SIZE_MB = 2;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 const App: React.FC = () => {
   const [productImage, setProductImage] = useState<ImageData | null>(null);
   const [modelImage, setModelImage] = useState<ImageData | null>(null);
@@ -24,6 +27,12 @@ const App: React.FC = () => {
   ) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        setError(`Image size exceeds the ${MAX_FILE_SIZE_MB}MB limit. Please choose a smaller file.`);
+        e.target.value = ''; // Clear the file input
+        return;
+      }
+      setError(null); // Clear previous errors
       try {
         const { base64, mimeType } = await fileToBase64(file);
         setter({ base64, mimeType, name: file.name });
@@ -48,7 +57,11 @@ const App: React.FC = () => {
       const resultBase64 = await generateStyledImage(productImage, modelImage);
       setGeneratedImage(`data:image/png;base64,${resultBase64}`);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      let errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      // Check for common non-JSON error signatures from serverless platforms
+      if (errorMessage.includes('Unexpected token') || errorMessage.includes('504') || errorMessage.includes('timeout')) {
+        errorMessage += " The server may be busy or the request timed out. This can happen with large images or high demand. Please try again in a moment.";
+      }
       setError(`Image generation failed: ${errorMessage}`);
       console.error(err);
     } finally {
